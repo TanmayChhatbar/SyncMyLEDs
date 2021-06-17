@@ -9,7 +9,7 @@ link = 'ws://192.168.1.61:81/'
 factor = 0.9        # how much of the old value to use 
 brightness = 0.2
 image_width = 2560
-fps_target = 120    # not working, timerdelay function causes unreliable fps
+fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
 
 # Cropped image dimensions and location
 width_to_factor = 2000
@@ -22,33 +22,37 @@ half_width_to_factor = int(width_to_factor / 2)
 y1, y2 = (width_centre - half_width_to_factor), (width_centre + half_width_to_factor)
 x1, x2 = (height_padding), (height_padding + height_to_factor)
 delay_target = 1 / fps_target
-
 bbox = (x1, y1, x2, y2)
+# fps_target=2/(A2+0.0008)^0.6
+# delay = (2/fps_target)^(1/0.6)
+# print(delay)
 
 def main():
     parseargs()
     ws = wsConnect(link)
     old = [0, 0, 0] 
     try:
+        frames = 0
         while True:
-            # timerDelay()      # to target fps, not working well at all
-            time.sleep(.002)
-            print(round(1 / timerCheck(), 2), end=' ') 
-            print('Hz', end='\r')
 
             # Take a screenshot
-            for num, monitor in enumerate(mss().monitors[1:], 1):
-                # Get raw pixels from the screen
-                ss = np.array(mss().grab(bbox))
-                ss = ss[:, :, 0:3]
+            # Get raw pixels from the screen
+            ss = np.array(mss().grab(bbox))
+            ss = ss[:, :, 0:3]
 
             # generate new rgb colors
             new = generateNewRGB(ss)
             rgb = comfilter(new, old)
-            sendrgb(ws, rgb, printx=False)
+            sendrgb(ws, rgb, printx=True)
+            frames += 1
+            if updateFPS():
+                print(frames, 'Hz', end='\r')
+                frames = 0
             old = rgb
 
     except KeyboardInterrupt:
+        print("Exiting.")
+        wsSend(ws, '#000000')
         wsClose(ws)
 
 def generateNewRGB(image):
@@ -59,7 +63,7 @@ def generateNewRGB(image):
 
     for row in image:
         for r, g, b in row:
-            if x == 2:              # take one in x pixel values to speed things up
+            if x == 3:              # take one in x pixel values to speed things up
                 average[0] += r
                 average[1] += g
                 average[2] += b
