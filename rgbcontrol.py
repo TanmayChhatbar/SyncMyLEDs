@@ -31,7 +31,6 @@ def main():
     parseargs()
     ws = wsConnect(link)
     old = [0, 0, 0] 
-    old2 = [0, 0, 0] 
     try:
         frames = 0
         while True:
@@ -52,7 +51,6 @@ def main():
                 print(frames, 'Hz', end='\r')
                 frames = 0
             old = rgb
-            old2 = new
 
     except KeyboardInterrupt:
         print("\nExiting.")
