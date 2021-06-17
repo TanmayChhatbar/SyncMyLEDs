@@ -44,12 +44,12 @@ def main():
             # generate new rgb colors
             new = generateNewRGB(ss)
             rgb = comfilter(new, old)
-            if rgb != new:
+            if rgb != old:
                 brightnesscorrectedrgb = tuple(int(val * brightness) for val in rgb)
                 sendrgb(ws, brightnesscorrectedrgb, printx=False)
                 frames += 1
             if updateFPS():
-                print(frames, 'Hz', new, old, rgb, end='\r')
+                print(frames, 'Hz', end='\r')
                 frames = 0
             old = rgb
             old2 = new
@@ -91,7 +91,7 @@ def sendrgb(ws, rgb, printx):
 
 def comfilter(new, old):
     # complementary filter, return value as a weighted average of the new and old values, to smooth transition
-    filtered = [int(old[i] * factor + new[i] * (1 - factor)) for i in range(3)]
+    filtered = [int(old[i] * factor + new[i] * (1 - factor) + 0.5) for i in range(3)]
     return filtered
 
 def parseargs():
