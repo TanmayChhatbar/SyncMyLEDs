@@ -6,14 +6,14 @@ from timecheck import *
 
 # user setup default, can use arguments to override
 link = 'ws://192.168.1.61:81/'
-factor = 0.9        # how much of the old value to use 
+factor = 0.97       # how much of the old value to use 
 brightness = 0.2
 image_width = 2560
 fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
 
 # Cropped image dimensions and location
 width_to_factor = 2000
-height_padding = 50
+height_padding = 100
 height_to_factor = 2
 
 # calc
@@ -31,6 +31,7 @@ def main():
     parseargs()
     ws = wsConnect(link)
     old = [0, 0, 0] 
+    old2 = [0, 0, 0] 
     try:
         frames = 0
         while True:
@@ -43,15 +44,18 @@ def main():
             # generate new rgb colors
             new = generateNewRGB(ss)
             rgb = comfilter(new, old)
-            sendrgb(ws, rgb, printx=True)
-            frames += 1
+            if rgb != new:
+                brightnesscorrectedrgb = tuple(int(val * brightness) for val in rgb)
+                sendrgb(ws, brightnesscorrectedrgb, printx=False)
+                frames += 1
             if updateFPS():
-                print(frames, 'Hz', end='\r')
+                print(frames, 'Hz', new, old, rgb, end='\r')
                 frames = 0
             old = rgb
+            old2 = new
 
     except KeyboardInterrupt:
-        print("Exiting.")
+        print("\nExiting.")
         wsSend(ws, '#000000')
         wsClose(ws)
 
@@ -73,7 +77,7 @@ def generateNewRGB(image):
                 x += 1
 
     for i in range(3):
-        average[i] = int(average[i] * brightness / count)
+        average[i] = int(average[i] / count)
 
     correct_sequence = (average[2], average[1], average[0])     # bgr to rgb
     return correct_sequence
@@ -87,7 +91,7 @@ def sendrgb(ws, rgb, printx):
 
 def comfilter(new, old):
     # complementary filter, return value as a weighted average of the new and old values, to smooth transition
-    filtered = tuple(int(old[i] * factor + new[i] * (1 - factor)) for i in range(3))
+    filtered = [int(old[i] * factor + new[i] * (1 - factor)) for i in range(3)]
     return filtered
 
 def parseargs():
