@@ -104,7 +104,6 @@ def parseargs():
     if args.Link:
         global link
         link = "ws://" + args.Link + '/'
-        print(link)
     if args.Brightness:
         brightnesscheck = float(args.Brightness)
         if brightnesscheck > 0 and brightnesscheck < 1:
