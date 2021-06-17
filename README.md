@@ -2,7 +2,8 @@
 
 ## Requirements and Installation
 Requires Python and the following modules
-    websocket-client
+
+    websocket-client   
     numpy
     mss
     argparse
