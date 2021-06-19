@@ -3,6 +3,7 @@ from mss import mss
 import argparse
 from websocketutils import *
 from timecheck import *
+import sys
 
 # user setup default, can use arguments to override
 link = 'ws://192.168.1.61:81/'
@@ -93,24 +94,61 @@ def comfilter(new, old):
     return filtered
 
 def parseargs():
-    parser = argparse.ArgumentParser(description='Sync websockets LED strip with action on screen.')
-    
-    parser.add_argument("-l", "--Link", help = "Local IP:Port address of the ESP running the websockets LED", required = False)
-    parser.add_argument("-f", "--Factor", help = "Complementary filter factor, higher will be smoother, but longer response time, 0-1", required = False)
-    parser.add_argument("-b", "--Brightness", help = "Brightness, 0-1", required = False)
-
-    args = parser.parse_args()
-
-    if args.Link:
-        global link
-        link = "ws://" + args.Link + '/'
-    if args.Brightness:
-        brightnesscheck = float(args.Brightness)
-        if brightnesscheck > 0 and brightnesscheck < 1:
-            global brightness
-            brightness = brightnesscheck
+    try:
+        if sys.argv[1] == 'default':
+            usedefault = True
         else:
-            "Invalid brightness setting, using default (0.2)"
+            usedefault = False
+    except:
+        usedefault = False
+    
+    if usedefault == False:
+        parser = argparse.ArgumentParser(description='Sync websockets LED strip with action on screen.')
+    
+        parser.add_argument("-l", "--Link", help = "Local IP:Port address of the ESP running the websockets LED", required = False)
+        parser.add_argument("-f", "--Factor", help = "Complementary filter factor, higher will be smoother, but longer response time, 0-1", required = False)
+        parser.add_argument("-b", "--Brightness", help = "Brightness, 0-1", required = False)
+
+        args = parser.parse_args()
+        if args.Link:
+            global link
+            link = "ws://" + args.Link + '/'
+        else:
+            linkin = input(f"Link:Port (Default {link}): ")
+            if linkin != '':
+                link = linkin
+                
+        if args.Brightness:
+            brightnesscheck = float(args.Brightness)
+            if brightnesscheck > 0 and brightnesscheck < 1:
+                global brightness
+                brightness = brightnesscheck
+            else:
+                "Invalid brightness setting, using default (0.2)"
+        else:
+            bin = input(f'Brightness (0-1) (Default {brightness}): ')
+            if bin != '':
+                bin = float(bin)
+                if inlimits(bin):
+                    print('brighness changed')
+                    brightness = bin
+            
+        if args.Factor:
+            global factor
+            factor = float(args.Factor)
+        else:
+            factorin = input(f"Factor (0-1) (Default {factor}): ")
+            if factorin != '':
+                factorin = float(factorin)
+                if inlimits(factorin):
+                    print(factorin)
+                    factor = factorin
+                else:
+                    print('value invalid')
+def inlimits(num):
+    if num >= 0 and num <= 1:
+        return True
+    return False
 
 if __name__ == '__main__':
     main()
