@@ -12,6 +12,7 @@ brightness = 0.95
 image_width = 2560
 fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
 maxdelta = 0.3
+timeout = 3    # seconds
 
 # Cropped image dimensions and location
 width_to_factor = 2000
@@ -25,6 +26,7 @@ y1, y2 = (width_centre - half_width_to_factor), (width_centre + half_width_to_fa
 x1, x2 = (height_padding), (height_padding + height_to_factor)
 delay_target = 1 / fps_target
 bbox = (x1, y1, x2, y2)
+
 # fps_target=2/(A2+0.0008)^0.6
 # delay = (2/fps_target)^(1/0.6)
 # print(delay)
@@ -35,6 +37,8 @@ def main():
     old = [float(0)] * 3 
     try:
         frames = 0
+        active = True
+        off = False
         while True:
             # Take a screenshot (bgr)
             ss = np.array(mss().grab(bbox))
@@ -44,12 +48,24 @@ def main():
             new = generateNewRGB(ss, old)
             rgb = comfilter(new, old)
             delrgb = checkdelta(rgb, old)
-
             # send rgb
             if delrgb != old:
+                if active == False:
+                    switch_lights(ws, delrgb, 'on')
+                active = True
+
                 brightnesscorrectedrgb = tuple(int(val * brightness) for val in delrgb)
                 sendrgb(ws, brightnesscorrectedrgb, printx=False)
                 frames += 1
+                off = False
+
+            else:
+                if active == True:
+                    time_since_update = time.time()
+                active = False
+                if time.time() - time_since_update > timeout and off == False:
+                    switch_lights(ws, delrgb, 'off')
+                    off = True
 
             # display fps
             if updateFPS():
@@ -66,11 +82,8 @@ def main():
         print("\nExiting.")
         
         # soft off
-        offlen = 60
-        for i in range(offlen):
-            color = tuple(int(col * (1 - i / offlen)) for col in delrgb)
-            sendrgb(ws, color, printx=False)
-        sendrgb(ws, (0, 0, 0), printx=False)
+        if off == False:
+            switch_lights(ws, delrgb, 'off')
 
         wsClose(ws)
 
@@ -187,6 +200,26 @@ def inlimits(num):
     if num >= 0 and num <= 1:
         return True
     return False
+
+def switch_lights(ws, delrgb, command):
+    offlen = 120
+    irange = list(range(offlen))
+
+    # change list based on command
+    if command == 'off':
+        irange.sort(reverse=True)
+        state = 0
+    else:
+        state = 1
+
+    # soft to command
+    for i in irange:
+        color = tuple(int(col * (i / offlen)) for col in delrgb)
+        sendrgb(ws, color, printx=False)
+
+    # confirm state
+    sendrgb(ws, tuple(int(col * state) for col in delrgb), printx=False)
+
 
 if __name__ == '__main__':
     main()
