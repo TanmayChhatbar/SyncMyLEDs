@@ -7,7 +7,7 @@ import sys
 
 # user setup default, can use arguments to override
 link = 'ws://192.168.1.61:81/'
-factor = 0.6       # how much of the old value to use 
+factor = 0.98       # how much of the old value to use 
 brightness = 0.95
 image_width = 2560
 fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
@@ -64,7 +64,14 @@ def main():
 
     except KeyboardInterrupt:
         print("\nExiting.")
-        wsSend(ws, '#000000')
+        
+        # soft off
+        offlen = 60
+        for i in range(offlen):
+            color = tuple(int(col * (1 - i / offlen)) for col in delrgb)
+            sendrgb(ws, color, printx=True)
+        sendrgb(ws, (0, 0, 0), printx=True)
+
         wsClose(ws)
 
 def generateNewRGB(image, old):
