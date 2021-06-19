@@ -7,10 +7,11 @@ import sys
 
 # user setup default, can use arguments to override
 link = 'ws://192.168.1.61:81/'
-factor = 0.97       # how much of the old value to use 
-brightness = 0.2
+factor = 0.6       # how much of the old value to use 
+brightness = 0.95
 image_width = 2560
 fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
+maxdelta = 0.3
 
 # Cropped image dimensions and location
 width_to_factor = 2000
@@ -31,67 +32,92 @@ bbox = (x1, y1, x2, y2)
 def main():
     parseargs()
     ws = wsConnect(link)
-    old = [0, 0, 0] 
+    old = [float(0)] * 3 
     try:
         frames = 0
         while True:
-
-            # Take a screenshot
-            # Get raw pixels from the screen
+            # Take a screenshot (bgr)
             ss = np.array(mss().grab(bbox))
             ss = ss[:, :, 0:3]
 
             # generate new rgb colors
-            new = generateNewRGB(ss)
+            new = generateNewRGB(ss, old)
             rgb = comfilter(new, old)
-            if rgb != old:
-                brightnesscorrectedrgb = tuple(int(val * brightness) for val in rgb)
+            delrgb = checkdelta(rgb, old)
+
+            # send rgb
+            if delrgb != old:
+                brightnesscorrectedrgb = tuple(int(val * brightness) for val in delrgb)
                 sendrgb(ws, brightnesscorrectedrgb, printx=False)
                 frames += 1
+
+            # display fps
             if updateFPS():
+                if frames < 100:
+                    print('  ', end='')
+                elif frames < 10:
+                    print(' ', end='')
                 print(frames, 'Hz', end='\r')
                 frames = 0
-            old = rgb
+
+            old = delrgb
 
     except KeyboardInterrupt:
         print("\nExiting.")
         wsSend(ws, '#000000')
         wsClose(ws)
 
-def generateNewRGB(image):
+def generateNewRGB(image, old):
     # calculate average rgb values
-    average = [0, 0, 0]
+    average = [float(0)] * 3
     count = 0
     x = 1
 
+    # sum
     for row in image:
         for r, g, b in row:
             if x == 3:              # take one in x pixel values to speed things up
-                average[0] += r
+                average[0] += b
                 average[1] += g
-                average[2] += b
+                average[2] += r
                 count += 1
                 x = 0
             else:
                 x += 1
 
+    # average
     for i in range(3):
-        average[i] = int(average[i] / count)
+        average[i] = float(average[i] / count)
+        
+    return average
 
-    correct_sequence = (average[2], average[1], average[0])     # bgr to rgb
-    return correct_sequence
+def checkdelta(new, old):
+    # check if max delta is not exceeded, for smoother transitions
+    delta = [float(0)] * 3
+    checked = [float(0)] * 3
+    for i in range(3):
+        delta[i] = new[i] - old[i]
+        if abs(delta[i]) > maxdelta:
+            if delta[i] > 0:
+                checked[i] = old[i] + maxdelta
+            else:
+                checked[i] = old[i] - maxdelta
+        else:
+            checked[i] = new[i]
+
+    return checked
+
+def comfilter(new, old):
+    # complementary filter, return value as a weighted average of the new and old values, to smooth transition
+    filtered = [round(old[i] * factor + new[i] * (1 - factor) + 0.5, 3) for i in range(3)]
+    return filtered
 
 def sendrgb(ws, rgb, printx):
     # send hex value to the websocket
     message = '#' + '%02x%02x%02x' % rgb
     wsSend(ws, message)
     if printx == True:
-        print(message)
-
-def comfilter(new, old):
-    # complementary filter, return value as a weighted average of the new and old values, to smooth transition
-    filtered = [int(old[i] * factor + new[i] * (1 - factor) + 0.5) for i in range(3)]
-    return filtered
+        print(message, rgb)
 
 def parseargs():
     try:
@@ -130,7 +156,6 @@ def parseargs():
             if bin != '':
                 bin = float(bin)
                 if inlimits(bin):
-                    print('brighness changed')
                     brightness = bin
             
         if args.Factor:
@@ -145,6 +170,12 @@ def parseargs():
                     factor = factorin
                 else:
                     print('value invalid')
+    else:
+        print('Using defaults:')
+        print(f'\t{link=        }')
+        print(f'\t{brightness=  }')
+        print(f'\t{factor=      }')
+
 def inlimits(num):
     if num >= 0 and num <= 1:
         return True
