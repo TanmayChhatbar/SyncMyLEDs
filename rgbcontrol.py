@@ -69,8 +69,8 @@ def main():
         offlen = 60
         for i in range(offlen):
             color = tuple(int(col * (1 - i / offlen)) for col in delrgb)
-            sendrgb(ws, color, printx=True)
-        sendrgb(ws, (0, 0, 0), printx=True)
+            sendrgb(ws, color, printx=False)
+        sendrgb(ws, (0, 0, 0), printx=False)
 
         wsClose(ws)
 
