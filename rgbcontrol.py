@@ -12,7 +12,7 @@ brightness = 0.95
 image_width = 2560
 fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
 maxdelta = 0.3
-timeout = 3    # seconds
+timeout = 60    # seconds
 
 # Cropped image dimensions and location
 width_to_factor = 2000
