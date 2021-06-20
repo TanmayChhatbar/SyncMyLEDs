@@ -13,17 +13,17 @@ Install requirements by running pip install -r requirements.txt
 ## Usage
 You can use the bat file, which contains the line below, or type similarly in the terminal
 
-    python rgbcontrol.py -b 0.2 -l 192.168.1.61:81 -f 0.9
-    
-To use defaults
-    
     python rgbcontrol.py default
+    
+To use custom settings through cmd
+
+    python rgbcontrol.py -b 0.2 -l 192.168.1.61:81 -f 0.9
 
 To manually set up the parameters
     
     python rgbcontrol.py
 
-    
+
 You'll want to modify the -l IP address:port for your strip
 
 Based on your preference, higher number for -f will allow smoother transitions, but worsen response for flashing images
