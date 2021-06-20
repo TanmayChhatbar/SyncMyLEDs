@@ -70,9 +70,9 @@ def main():
             # display fps
             if updateFPS():
                 if frames < 100:
-                    print('  ', end='')
+                    print('   ', end='')
                 elif frames < 10:
-                    print(' ', end='')
+                    print('    ', end='')
                 print(frames, 'Hz', ' ', end='')
                 frames = 0
                 print('\t', brightnesscorrectedrgb, '    ', end='\r')
