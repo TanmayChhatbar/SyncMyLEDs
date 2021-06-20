@@ -50,7 +50,7 @@ def main():
             delrgb = checkdelta(rgb, old)
             # send rgb
             if delrgb != old:
-                if active == False:
+                if off == True:
                     switch_lights(ws, delrgb, 'on')
                 active = True
 
@@ -204,7 +204,7 @@ def inlimits(num):
 def switch_lights(ws, delrgb, command):
     offlen = 120
     irange = list(range(offlen))
-
+    
     # change list based on command
     if command == 'off':
         irange.sort(reverse=True)
