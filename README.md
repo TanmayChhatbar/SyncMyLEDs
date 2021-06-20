@@ -24,11 +24,11 @@ To manually set up the parameters
     python rgbcontrol.py
 
 
-You'll want to modify the -l IP address:port for your strip
+-l IP address:port for your strip eg. 192.168.1.61:81
 
-Based on your preference, higher number for -f will allow smoother transitions, but worsen response for flashing images
+-f : factor, increase to allow smoother transitions, but worsen response for flashing images. Value in range 0-1
 
-Modify -b to control brighness, would recommend you stick between 0-1
+-b : control brighness, would recommend you stick with value in range 0-1
 
 
 Alternatively, you can modify these variables in the User Setup part of rgbcontrol.py
