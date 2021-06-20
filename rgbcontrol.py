@@ -75,7 +75,7 @@ def main():
                     print(' ', end='')
                 print(frames, 'Hz', end='')
                 frames = 0
-                print('\t', brightnesscorrectedrgb, end='\r')
+                print('\t', brightnesscorrectedrgb, '    ', end='\r')
 
             old = delrgb
 
