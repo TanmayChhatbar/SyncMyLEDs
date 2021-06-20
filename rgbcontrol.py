@@ -8,7 +8,7 @@ import sys
 # user setup default, can use arguments to override
 link = 'ws://192.168.1.61:81/'
 factor = 0.98       # how much of the old value to use 
-brightness = 0.95
+brightness = 0.6
 image_width = 2560
 fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
 maxdelta = 0.3
@@ -16,18 +16,18 @@ timeout = 60    # seconds
 
 # Cropped image dimensions and location
 width_to_factor = 2000
-height_padding = 100
-height_to_factor = 2
+height_padding = 260
+height_to_factor = 1
 
 # calc
 width_centre = int(image_width / 2)
 half_width_to_factor = int(width_to_factor / 2)
-y1, y2 = (width_centre - half_width_to_factor), (width_centre + half_width_to_factor)
-x1, x2 = (height_padding), (height_padding + height_to_factor)
-delay_target = 1 / fps_target
+x1, x2 = (width_centre - half_width_to_factor), (width_centre + half_width_to_factor)
+y1, y2 = (height_padding), (height_padding + height_to_factor)
 bbox = (x1, y1, x2, y2)
 
 # fps_target=2/(A2+0.0008)^0.6
+# delay_target = 1 / fps_target
 # delay = (2/fps_target)^(1/0.6)
 # print(delay)
 
@@ -73,8 +73,9 @@ def main():
                     print('  ', end='')
                 elif frames < 10:
                     print(' ', end='')
-                print(frames, 'Hz', end='\r')
+                print(frames, 'Hz', end='')
                 frames = 0
+                print('\t', brightnesscorrectedrgb, end='\r')
 
             old = delrgb
 
@@ -108,7 +109,7 @@ def generateNewRGB(image, old):
     # average
     for i in range(3):
         average[i] = float(average[i] / count)
-        
+    # print(average)
     return average
 
 def checkdelta(new, old):

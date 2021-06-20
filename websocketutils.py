@@ -4,7 +4,7 @@ def wsConnect(link):
     ws = websocket.WebSocket()
     print(f"Connecting to {link}", end='\r')
     ws.connect(link)
-    print(ws.recv(), '')
+    print(ws.recv(), '\n')
     return ws
 
 def wsSend(ws, val):
