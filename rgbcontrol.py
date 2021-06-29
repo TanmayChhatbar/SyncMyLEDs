@@ -7,17 +7,18 @@ import sys
 
 # user setup default, can use arguments to override
 link = 'ws://192.168.1.61:81/'
-factor = 0.98       # how much of the old value to use 
-brightness = 0.6
-image_width = 2560
-fps_target = 120    # NOT WORKING, timerdelay function causes unreliable fps
-maxdelta = 0.3
-timeout = 60    # seconds
+factor = 0.97               # how much of the old value to use 
+brightness = 0.8
+image_width = 2560          # 1440p monitor
+maxdelta = 10
+timeout = 60                # seconds
+min_brightness = 50         # need to uncomment a line in main function. lower brightness values will worsen smoothness when screen is dark
+# fps_target = 120          # not working
 
-# Cropped image dimensions and location
-width_to_factor = 2000
-height_padding = 260
-height_to_factor = 1
+# Cropped image dimensions and location (default settings for 1440p)
+width_to_factor = 2000      # how much of the width to factor, centred
+height_padding = 260        # how much of the top to ignore
+height_to_factor = 1        # how much of the height to factor after the ignored pixels
 
 # calc
 width_centre = int(image_width / 2)
@@ -26,6 +27,7 @@ x1, x2 = (width_centre - half_width_to_factor), (width_centre + half_width_to_fa
 y1, y2 = (height_padding), (height_padding + height_to_factor)
 bbox = (x1, y1, x2, y2)
 
+# not working
 # fps_target=2/(A2+0.0008)^0.6
 # delay_target = 1 / fps_target
 # delay = (2/fps_target)^(1/0.6)
@@ -34,48 +36,49 @@ bbox = (x1, y1, x2, y2)
 def main():
     parseargs()
     ws = wsConnect(link)
-    old = [float(0)] * 3 
+
     try:
         frames = 0
         active = True
         off = False
+        old = [float(0)] * 3
+        oldsent = [float(0)] * 3
+
         while True:
             # Take a screenshot (bgr)
-            ss = np.array(mss().grab(bbox))
-            ss = ss[:, :, 0:3]
+            ss = np.array(mss().grab(bbox))[:, :, 0:3]
 
             # generate new rgb colors
-            new = generateNewRGB(ss, old)
-            rgb = comfilter(new, old)
+            rgb = comfilter(generateNewRGB(ss), old)
             delrgb = checkdelta(rgb, old)
+
             # send rgb
             if delrgb != old:
+                active = True
                 if off == True:
                     switch_lights(ws, delrgb, 'on')
-                active = True
+                    off = False
 
+                # correct for brightness multiplier    
                 brightnesscorrectedrgb = tuple(int(val * brightness) for val in delrgb)
-                sendrgb(ws, brightnesscorrectedrgb, printx=False)
+                
+                # minimum brightness offset, uncomment next line to enable a minimum brightness
+                # brightnesscorrectedrgb = tuple(int(min_brightness * (1 + val / 255)) for val in brightnesscorrectedrgb)
+                if brightnesscorrectedrgb != oldsent:
+                    oldsent = sendrgb(ws, brightnesscorrectedrgb, printx=False)
                 frames += 1
-                off = False
 
             else:
+                # check timeout
                 if active == True:
                     time_since_update = time.time()
-                active = False
-                if time.time() - time_since_update > timeout and off == False:
+                    active = False
+                elif time.time() - time_since_update > timeout and off == False:
                     switch_lights(ws, delrgb, 'off')
                     off = True
 
-            # display fps
-            if updateFPS():
-                if frames < 100:
-                    print(' ', end='')
-                elif frames < 10:
-                    print('  ', end='')
-                print(' ', frames, 'Hz', ' ', end='')
-                frames = 0
-                print('\t', brightnesscorrectedrgb, '    ', end='\r')
+            # update fps in terminal
+            frames = updateTerminal(frames, brightnesscorrectedrgb)
 
             old = delrgb
 
@@ -88,7 +91,7 @@ def main():
 
         wsClose(ws)
 
-def generateNewRGB(image, old):
+def generateNewRGB(image):
     # calculate average rgb values
     average = [float(0)] * 3
     count = 0
@@ -109,17 +112,23 @@ def generateNewRGB(image, old):
     # average
     for i in range(3):
         average[i] = float(average[i] / count)
-    # print(average)
+        
     return average
+
+def comfilter(new, old):
+    # complementary filter, return value as a weighted average of the new and old values, to smooth transition
+    return [(old[i] * factor + new[i] * (1 - factor)) for i in range(3)]
 
 def checkdelta(new, old):
     # check if max delta is not exceeded, for smoother transitions
-    delta = [float(0)] * 3
+    delta = 0.0
     checked = [float(0)] * 3
+
     for i in range(3):
-        delta[i] = new[i] - old[i]
-        if abs(delta[i]) > maxdelta:
-            if delta[i] > 0:
+        delta = new[i] - old[i]
+
+        if abs(delta) > maxdelta:
+            if delta > 0:
                 checked[i] = old[i] + maxdelta
             else:
                 checked[i] = old[i] - maxdelta
@@ -128,17 +137,13 @@ def checkdelta(new, old):
 
     return checked
 
-def comfilter(new, old):
-    # complementary filter, return value as a weighted average of the new and old values, to smooth transition
-    filtered = [round(old[i] * factor + new[i] * (1 - factor) + 0.5, 3) for i in range(3)]
-    return filtered
-
 def sendrgb(ws, rgb, printx):
     # send hex value to the websocket
-    message = '#' + '%02x%02x%02x' % rgb
+    message = '#' + '%02x%02x%02x' %rgb
     wsSend(ws, message)
     if printx == True:
         print(message, rgb)
+    return rgb
 
 def parseargs():
     try:
@@ -220,6 +225,17 @@ def switch_lights(ws, delrgb, command):
 
     # confirm state
     sendrgb(ws, tuple(int(col * state) for col in delrgb), printx=False)
+
+def updateTerminal(frames, color):
+    if updateFPS():
+        if frames < 100:
+            print(' ', end='')
+        elif frames < 10:
+            print('  ', end='')
+        print(' ', frames, 'Hz', ' ', end='')
+        frames = 0
+        print('\t', color, '    ', end='\r')
+    return frames
 
 
 if __name__ == '__main__':
