@@ -1,0 +1,65 @@
+#include <Arduino.h>
+#include "config.h"
+#include <FastLED.h>
+
+extern uint8_t bright;
+extern uint8_t ledMode;
+extern uint8_t flag;
+extern CRGBArray<LED_COUNT> leds;
+extern uint8_t delayValue;
+extern uint8_t stepValue;
+extern uint8_t hueValue;
+extern uint8_t idex;
+extern uint8_t ihue;
+extern uint8_t saturationVal;
+extern uint8_t ibright;
+extern uint16_t TOP_INDEX;
+extern uint8_t EVENODD;
+extern uint8_t bouncedirection;
+extern int ledsX[LED_COUNT][3];
+
+void updateColor(uint8_t r, uint8_t g, uint8_t b);
+int adjacent_cw(int i);
+int adjacent_ccw(int i);
+void fadeall();
+void rainbow_fade();
+void rainbow_loop();
+void random_burst();
+void color_bounce();
+void color_bounceFADE();
+void red_blue_bounce();
+int antipodal_index(int i);
+void rotatingRedBlue();
+void flicker();
+void fade_vertical();
+int horizontal_index(int i);
+void random_red();
+void rule30();
+void random_march();
+void copy_led_array();
+void rwb_march();
+void flame();
+void rainbow_vertical();
+void random_color_pop();
+void policeBlinker();
+void rgb_propeller();
+void kitt();
+void matrix();
+void new_rainbow_loop();
+void setPixel(int Pixel, byte red, byte green, byte blue);
+void setAll(byte red, byte green, byte blue);
+void Fire(int Cooling, int Sparking, int SpeedDelay);
+void setPixelHeatColor(int Pixel, byte temperature);
+void CenterToOutside(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay);
+void OutsideToCenter(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay);
+void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, int ReturnDelay);
+void Sparkle(byte red, byte green, byte blue, int SpeedDelay);
+void theaterChase(byte red, byte green, byte blue, int SpeedDelay);
+void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause);
+void blueFire(int Cooling, int Sparking, int SpeedDelay);
+void setPixelHeatColorBlue(int Pixel, byte temperature);
+void fadeToCenter();
+void runnerChameleon();
+void blende();
+void blende_2();
+void ledEffect(int ledMode);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       

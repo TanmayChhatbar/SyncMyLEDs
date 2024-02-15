@@ -1,0 +1,4 @@
+websocket-client
+numpy
+mss
+argparse
