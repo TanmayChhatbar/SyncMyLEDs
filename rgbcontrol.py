@@ -6,7 +6,7 @@ from timecheck import *
 import sys
 
 # user setup default, can use arguments to override
-link = 'ws://192.168.1.61:81/'
+link = 'ws://192.168.1.88:81/'
 factor = 0.97               # how much of the old value to use 
 brightness = 0.8
 image_width = 2560          # 1440p monitor
