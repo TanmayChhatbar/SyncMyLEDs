@@ -8,16 +8,14 @@
 #include <SPIFFS.h>
 #define FASTLED_ESP8266_RAW_PIN_ORDER
 #include <FastLED.h>
-
-const char* ssid = "SecureNetworksLink"; // имя вашей сети
-const char* password = "E701D204"; // пароль вашей сети
+#include "credentials.h"
 
 IPAddress Ip(192, 168, 1, 88); // IP-адрес для ESP
 IPAddress Gateway(192, 168, 1, 1); // IP-адрес шлюза (роутера)
 IPAddress Subnet(255, 255, 255, 0); // маска подсети, диапазон IP-адресов в локальной сети
 
 #define LED_COUNT 10 // число пикселей в ленте
-#define LED_DT 23    // пин, куда подключен DIN ленты (номера пинов ESP8266 совпадает с Arduino)  
+#define LED_DT 13    // пин, куда подключен DIN ленты (номера пинов ESP8266 совпадает с Arduino)  
 //pin where the DIN tape is connected (pin numbers of ESP8266 are the same as Arduino)
 
 
