@@ -1,5 +1,5 @@
 import numpy as np
-from mss import mss
+import mss
 import argparse
 from websocketutils import *
 from timecheck import *
@@ -43,10 +43,11 @@ def main():
         off = False
         old = [float(0)] * 3
         oldsent = [float(0)] * 3
+        screen = mss.MSS()
 
         while True:
             # Take a screenshot (bgr)
-            ss = np.array(mss().grab(bbox))[:, :, 0:3]
+            ss = np.array(screen.grab(bbox))[:, :, 0:3]
 
             # generate new rgb colors
             rgb = comfilter(generateNewRGB(ss), old)
