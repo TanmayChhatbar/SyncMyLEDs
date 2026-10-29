@@ -1,5 +1,5 @@
 /*
-    Скетч разработан 30.11.2018 Wirekraken
+    sketch created on 30.11.2018 by Wirekraken
     https://github.com/wirekraken/ESP8266-Websockets-LED/tree/master/ESP8266-LED/data
 */
 #include <Arduino.h>
@@ -13,11 +13,11 @@
 #include "config.h"
 #include "led_effects.h"
 
-// инициализация websocket на 81 порту
+// initialize websocket on port 81
 WebSocketsServer webSocket(81);
 WebServer server(80);
 
-// функция обработки входящих сообщений
+// handle incoming messages
 void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
 {
 
@@ -26,7 +26,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
         IPAddress ip = webSocket.remoteIP(num);
 
         String message = String("Connected");
-        webSocket.broadcastTXT(message); // отправляем последнее значение всем клиентам при подключении
+        webSocket.broadcastTXT(message); // send the latest value to all clients on connection
     }
 
     if (type == WStype_TEXT)
@@ -68,10 +68,10 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
             }
             else
             {
-                // преобразуем в 24 битное цветовое число
+                // convert to a 24-bit color
                 uint32_t rgb = (uint32_t)strtol((const char *)&payload[1], NULL, 16);
 
-                // преобразуем 24 бит по 8 бит на канал
+                // split into 8 bits per channel
                 uint8_t r = (0 + (rgb >> 16) & 0xFF);
                 uint8_t g = (0 + (rgb >> 8) & 0xFF);
                 uint8_t b = (0 + (rgb >> 0) & 0xFF);
@@ -91,7 +91,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
     }
 }
 
-// функция получения типа файла
+// get the file type
 String getContentType(String filename)
 {
     if (server.hasArg("download"))
@@ -123,7 +123,7 @@ String getContentType(String filename)
     return "text/plain";
 }
 
-// функция поиска файла в файловой системе
+// find a file in the filesystem
 bool handleFileRead(String path)
 {
 #ifdef DEBUG
@@ -147,7 +147,7 @@ void setup()
     Serial.setTimeout(0);
     LEDS.setBrightness(bright);
 
-    LEDS.addLeds<WS2812B, LED_DT, GRB>(leds, LED_COUNT); // настройки для вашей ленты (ленты на WS2811, WS2812, WS2812B)
+    LEDS.addLeds<WS2812B, LED_DT, GRB>(leds, LED_COUNT); // configure the strip (WS2811, WS2812, WS2812B)
     // settings for your tape (tapes on WS2811, WS2812, WS2812B)
     updateColor(0, 0, 255);
     LEDS.show();
@@ -184,7 +184,7 @@ void setup()
 
 void loop()
 {
-    // обработка входящих запросов HTTP или WebSockets
+    // handle HTTP and websocket requests
     webSocket.loop();
     server.handleClient();
 

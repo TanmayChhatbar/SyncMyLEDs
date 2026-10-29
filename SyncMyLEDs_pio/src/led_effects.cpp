@@ -1,25 +1,24 @@
 #include "led_effects.h"
 
-uint8_t bright = 25; // яркость (0 - 255)
-uint8_t ledMode = 0; // эффект (0 - 29)
+uint8_t bright = 25; // brightness (0 - 255)
+uint8_t ledMode = 0; // effect (0 - 29)
 
-uint8_t flag = 1; // флаг отмены эффекта
+uint8_t flag = 1; // effect cancellation flag
 
 CRGBArray<LED_COUNT> leds;
 
-uint8_t delayValue = 20; // задержка
-uint8_t stepValue = 10;  // шаг по пикселям
-uint8_t hueValue = 0;    // тон цвета
+uint8_t delayValue = 20; // delay
+uint8_t stepValue = 10;  // pixel step
+uint8_t hueValue = 0;    // hue
 
-uint8_t idex = 0;                            // индекс текущего пикселя
-uint8_t ihue = 0;                            // тон цвета
-uint8_t saturationVal = 255;                 // насыщенность
-uint8_t ibright = 0;                         // значение яркости
-uint16_t TOP_INDEX = uint8_t(LED_COUNT / 2); // получаем середину ленты
-uint8_t EVENODD = LED_COUNT % 2;             // флаг проверки четности
-uint8_t bouncedirection = 0;                 // флаг для color_bounce()
-int ledsX[LED_COUNT][3];                     // массив для сохранения случайных значений пикселя
-
+uint8_t idex = 0;                            // current pixel index
+uint8_t ihue = 0;                            // hue
+uint8_t saturationVal = 255;                 // saturation
+uint8_t ibright = 0;                         // brightness value
+uint16_t TOP_INDEX = uint8_t(LED_COUNT / 2); // strip midpoint
+uint8_t EVENODD = LED_COUNT % 2;             // parity flag
+uint8_t bouncedirection = 0;                 // flag for color_bounce()
+int ledsX[LED_COUNT][3];                     // store random pixel values
 
 void updateColor(uint8_t r, uint8_t g, uint8_t b)
 {
@@ -56,7 +55,7 @@ int adjacent_ccw(int i)
     return r;
 }
 
-// служебная функция
+// helper function
 void fadeall()
 {
     for (int i = 0; i < LED_COUNT; i++)
@@ -65,7 +64,7 @@ void fadeall()
     }
 }
 
-// плавная смена цветов
+// smooth color transitions
 void rainbow_fade()
 {
     ihue++;
@@ -81,7 +80,7 @@ void rainbow_fade()
     delay(delayValue);
 }
 
-// крутящаяся радуга
+// rotating rainbow
 void rainbow_loop()
 {
     idex++;
@@ -99,7 +98,7 @@ void rainbow_loop()
     delay(delayValue);
 }
 
-// случайная смена цветов
+// random color changes
 void random_burst()
 {
     idex = random(0, LED_COUNT);
@@ -109,7 +108,7 @@ void random_burst()
     delay(delayValue);
 }
 
-// бегающий пиксель
+// moving pixel
 void color_bounce()
 {
     if (bouncedirection == 0)
@@ -144,7 +143,7 @@ void color_bounce()
     delay(delayValue);
 }
 
-// бегающий паровозик пикселей
+// moving train of pixels
 void color_bounceFADE()
 {
     if (bouncedirection == 0)
@@ -210,7 +209,7 @@ void color_bounceFADE()
     delay(delayValue);
 }
 
-// вращение красного и синего
+// rotating red and blue
 void red_blue_bounce()
 {
     idex++;
@@ -251,7 +250,7 @@ int antipodal_index(int i)
     return iN;
 }
 
-// вращение красного/синего
+// rotating red and blue
 void rotatingRedBlue()
 {
     idex++;
@@ -268,7 +267,7 @@ void rotatingRedBlue()
     delay(delayValue);
 }
 
-// случайный стробоскоп
+// random strobe
 void flicker()
 {
     int random_bright = random(0, 255);
@@ -285,7 +284,7 @@ void flicker()
     }
 }
 
-// плавная смена яркости
+// smooth brightness transitions
 void fade_vertical()
 {
     idex++;
@@ -306,7 +305,7 @@ void fade_vertical()
     delay(delayValue);
 }
 
-// служебная функция
+// helper function
 int horizontal_index(int i)
 {
     if (i == 0)
@@ -324,7 +323,7 @@ int horizontal_index(int i)
     return LED_COUNT - i;
 }
 
-// служебная функция
+// helper function
 void random_red()
 {
     int temprand;
@@ -345,7 +344,7 @@ void random_red()
     LEDS.show();
 }
 
-// безумие красных светодиодов
+// random red leds
 void rule30()
 {
     if (bouncedirection == 0)
@@ -398,7 +397,7 @@ void rule30()
     delay(delayValue);
 }
 
-// безумие случайных цветов
+// random colors
 void random_march()
 {
     copy_led_array();
@@ -424,7 +423,7 @@ void copy_led_array()
     }
 }
 
-// белый синий красный бегут по кругу
+// white, blue and red cycle around
 void rwb_march()
 {
     copy_led_array();
@@ -463,7 +462,7 @@ void rwb_march()
     delay(delayValue);
 }
 
-// эффект пламени
+// flame effect
 void flame()
 {
     int idelay = random(0, 35);
@@ -487,7 +486,7 @@ void flame()
     }
 }
 
-// радуга
+// rainbow
 void rainbow_vertical()
 {
     idex++;
@@ -508,7 +507,7 @@ void rainbow_vertical()
     delay(delayValue);
 }
 
-// безумие случайных вспышек
+// random flashes
 void random_color_pop()
 {
     idex = random(0, LED_COUNT);
@@ -519,7 +518,7 @@ void random_color_pop()
     delay(delayValue);
 }
 
-// полицейская мигалка
+// police lights
 void policeBlinker()
 {
     int hueValue = 0;
@@ -551,7 +550,7 @@ void policeBlinker()
 }
 
 void rgb_propeller()
-{ // пропеллер
+{ // propeller
     idex++;
     int ghue = (hueValue + 80) % 255;
     int bhue = (hueValue + 160) % 255;
@@ -572,7 +571,7 @@ void rgb_propeller()
     delay(delayValue);
 }
 
-// случайные вспышки красного
+// random red flashes
 void kitt()
 {
     int rand = random(0, TOP_INDEX);
@@ -592,7 +591,7 @@ void kitt()
     }
 }
 
-// зеленые бегают по кругу случайно
+// random green pixels circle around
 void matrix()
 {
     int rand = random(0, 100);
@@ -615,7 +614,7 @@ void matrix()
     delay(delayValue);
 }
 
-// плавная вращающаяся радуга
+// smooth rotating rainbow
 void new_rainbow_loop()
 {
     ihue -= 1;
@@ -630,7 +629,7 @@ void setPixel(int Pixel, byte red, byte green, byte blue)
     leds[Pixel].g = green;
     leds[Pixel].b = blue;
 }
-// служебная функция
+// helper function
 void setAll(byte red, byte green, byte blue)
 {
     for (int i = 0; i < LED_COUNT; i++)
@@ -640,7 +639,7 @@ void setAll(byte red, byte green, byte blue)
     FastLED.show();
 }
 
-// линейный огонь
+// linear fire
 void Fire(int Cooling, int Sparking, int SpeedDelay)
 {
     static byte heat[LED_COUNT];
@@ -769,7 +768,7 @@ void LeftToRight(byte red, byte green, byte blue, int EyeSize, int SpeedDelay, i
     delay(ReturnDelay);
 }
 
-// случайные вспышки белого цвета
+// random white flashes
 void Sparkle(byte red, byte green, byte blue, int SpeedDelay)
 {
     int Pixel = random(LED_COUNT);
@@ -779,7 +778,7 @@ void Sparkle(byte red, byte green, byte blue, int SpeedDelay)
     setPixel(Pixel, 0, 0, 0);
 }
 
-// бегущие каждые 3 пикселя
+// moving pattern every 3 pixels
 void theaterChase(byte red, byte green, byte blue, int SpeedDelay)
 {
     for (int j = 0; j < 10; j++)
@@ -800,7 +799,7 @@ void theaterChase(byte red, byte green, byte blue, int SpeedDelay)
     }
 }
 
-// стробоскопический эффект
+// strobe effect
 void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, int EndPause)
 {
     for (int j = 0; j < StrobeCount; j++)
@@ -816,7 +815,7 @@ void Strobe(byte red, byte green, byte blue, int StrobeCount, int FlashDelay, in
     delay(EndPause);
 }
 
-// голубой линейный огонь
+// blue linear fire
 void blueFire(int Cooling, int Sparking, int SpeedDelay)
 {
     static byte heat[LED_COUNT];
@@ -872,7 +871,7 @@ void setPixelHeatColorBlue(int Pixel, byte temperature)
     }
 }
 
-// расплывающие цвета
+// fading colors
 void fadeToCenter()
 {
     static uint8_t hue;
@@ -885,7 +884,7 @@ void fadeToCenter()
     }
 }
 
-// бегающий по кругу паровозик
+// train moving in a circle
 void runnerChameleon()
 {
     static uint8_t hue = 0;
@@ -943,7 +942,7 @@ void blende_2()
     }
 }
 
-// функция эффектов
+// effect dispatcher
 void ledEffect(int ledMode)
 {
     switch (ledMode)
@@ -1026,7 +1025,7 @@ void ledEffect(int ledMode)
         hueValue = 95;
         break;
 
-    // тяжелые эффекты
+    // resource-intensive effects
     case 18:
         rwb_march();
         delayValue = 80;
