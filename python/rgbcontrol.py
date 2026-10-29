@@ -11,14 +11,14 @@ factor = 0.9  # how much of the old value to use
 brightness = 0.8  # brightness multiplier, 0-1
 led_count = 23  # match LED_COUNT in the firmware's src/config.h
 num_colors = 20  # number of horizontal screen zones, up to the strip's led count
-image_width = 2560  # 1440p monitor
+image_width = 3440  # 1440p ultrawide monitor
 maxdelta = 10
 timeout = 60  # seconds
 min_brightness = 50  # need to uncomment a line in main function. lower brightness values will worsen smoothness when screen is dark
 # fps_target = 120          # not working
 
 # Cropped image dimensions and location (default settings for 1440p)
-width_to_factor = 2000  # how much of the width to factor, centred
+width_to_factor = image_width  # how much of the width to factor, centred
 height_padding = 260  # how much of the top to ignore
 height_to_factor = 1  # how much of the height to factor after the ignored pixels
 
