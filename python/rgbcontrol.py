@@ -7,8 +7,10 @@ import sys
 
 # user setup default, can use arguments to override
 link = 'ws://192.168.1.88:81/'
-factor = 0.97               # how much of the old value to use 
+factor = 0.5               # how much of the old value to use 
 brightness = 0.8
+num_colors_to_send = 5      # number of horizontal screen zones, up to the strip's led count
+led_count = 46              # match LED_COUNT in the firmware's src/config.h
 image_width = 2560          # 1440p monitor
 maxdelta = 10
 timeout = 60                # seconds
@@ -35,14 +37,18 @@ bbox = (x1, y1, x2, y2)
 
 def main():
     parseargs()
+    if not 1 <= num_colors_to_send <= min(led_count, width_to_factor):
+        raise ValueError('number of colors must be between 1 and the LED count and capture width')
     ws = wsConnect(link)
 
     try:
         frames = 0
         active = True
         off = False
-        old = [float(0)] * 3
-        oldsent = [float(0)] * 3
+        old = [[0.0] * 3 for _ in range(num_colors_to_send)]
+        oldsent = None
+        delrgb = old
+        brightnesscorrectedrgb = [tuple([0] * 3) for _ in old]
         screen = mss.MSS()
 
         while True:
@@ -50,21 +56,23 @@ def main():
             ss = np.array(screen.grab(bbox))[:, :, 0:3]
 
             # generate new rgb colors
-            rgb = comfilter(generateNewRGB(ss), old)
-            delrgb = checkdelta(rgb, old)
+            sampled = generateZoneColors(ss, num_colors_to_send)
+            delrgb = [checkdelta(comfilter(new, previous), previous)
+                      for new, previous in zip(sampled, old)]
 
             # send rgb
-            if delrgb != old:
+            if delrgb != old or oldsent is None:
                 active = True
                 if off == True:
                     switch_lights(ws, delrgb, 'on')
                     off = False
 
                 # correct for brightness multiplier    
-                brightnesscorrectedrgb = tuple(int(val * brightness) for val in delrgb)
+                brightnesscorrectedrgb = [tuple(int(val * brightness) for val in color)
+                                          for color in delrgb]
                 
                 # minimum brightness offset, uncomment next line to enable a minimum brightness
-                # brightnesscorrectedrgb = tuple(int(min_brightness * (1 + val / 255)) for val in brightnesscorrectedrgb)
+                # brightnesscorrectedrgb = [tuple(int(min_brightness * (1 + val / 255)) for val in color) for color in brightnesscorrectedrgb]
                 if brightnesscorrectedrgb != oldsent:
                     oldsent = sendrgb(ws, brightnesscorrectedrgb, printx=False)
                 frames += 1
@@ -92,29 +100,10 @@ def main():
 
         wsClose(ws)
 
-def generateNewRGB(image):
-    # calculate average rgb values
-    average = [float(0)] * 3
-    count = 0
-    x = 1
-
-    # sum
-    for row in image:
-        for r, g, b in row:
-            if x == 3:              # take one in x pixel values to speed things up
-                average[0] += b
-                average[1] += g
-                average[2] += r
-                count += 1
-                x = 0
-            else:
-                x += 1
-
-    # average
-    for i in range(3):
-        average[i] = float(average[i] / count)
-        
-    return average
+def generateZoneColors(image, count):
+    # average each left-to-right zone and convert bgr to rgb
+    return [zone.mean(axis=(0, 1))[::-1].tolist()
+            for zone in np.array_split(image, count, axis=1)]
 
 def comfilter(new, old):
     # complementary filter, return value as a weighted average of the new and old values, to smooth transition
@@ -138,13 +127,13 @@ def checkdelta(new, old):
 
     return checked
 
-def sendrgb(ws, rgb, printx):
-    # send hex value to the websocket
-    message = '#' + '%02x%02x%02x' %rgb
+def sendrgb(ws, colors, printx):
+    # send left-to-right hex colors to the websocket
+    message = ','.join('#%02x%02x%02x' % tuple(color) for color in colors)
     wsSend(ws, message)
     if printx == True:
-        print(message, rgb)
-    return rgb
+        print(message, colors)
+    return colors
 
 def parseargs():
     try:
@@ -161,8 +150,12 @@ def parseargs():
         parser.add_argument("-l", "--Link", help = "Local IP:Port address of the ESP running the websockets LED", required = False)
         parser.add_argument("-f", "--Factor", help = "Complementary filter factor, higher will be smoother, but longer response time, 0-1", required = False)
         parser.add_argument("-b", "--Brightness", help = "Brightness, 0-1", required = False)
+        parser.add_argument("-n", "--num-colors-to-send", type=int, help="number of screen zones (at most the strip's LED count)")
 
         args = parser.parse_args()
+        if args.num_colors_to_send is not None:
+            global num_colors_to_send
+            num_colors_to_send = args.num_colors_to_send
         if args.Link:
             global link
             link = "ws://" + args.Link + '/'
@@ -202,6 +195,7 @@ def parseargs():
         print(f'\t{link=        }')
         print(f'\t{brightness=  }')
         print(f'\t{factor=      }')
+        print(f'\t{num_colors_to_send=}')
 
 def inlimits(num):
     if num >= 0 and num <= 1:
@@ -221,11 +215,13 @@ def switch_lights(ws, delrgb, command):
 
     # soft to command
     for i in irange:
-        color = tuple(int(col * (i / offlen)) for col in delrgb)
-        sendrgb(ws, color, printx=False)
+        colors = [tuple(int(col * brightness * (i / offlen)) for col in color)
+                  for color in delrgb]
+        sendrgb(ws, colors, printx=False)
 
     # confirm state
-    sendrgb(ws, tuple(int(col * state) for col in delrgb), printx=False)
+    sendrgb(ws, [tuple(int(col * brightness * state) for col in color)
+                 for color in delrgb], printx=False)
 
 def updateTerminal(frames, color):
     if updateFPS():

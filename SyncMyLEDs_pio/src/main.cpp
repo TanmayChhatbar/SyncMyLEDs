@@ -12,6 +12,7 @@
 #include "credentials.h"
 #include "config.h"
 #include "led_effects.h"
+#include "color_zones.h"
 
 // initialize websocket on port 81
 WebSocketsServer webSocket(81);
@@ -29,7 +30,7 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
         webSocket.broadcastTXT(message); // send the latest value to all clients on connection
     }
 
-    if (type == WStype_TEXT)
+    if (type == WStype_TEXT && length > 0)
     {
         String data;
         for (int x = 0; x < length; x++)
@@ -57,36 +58,19 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
         }
         else if (payload[0] == '#')
         {
+            ZoneColor colors[LED_COUNT];
+            const size_t count = parseZoneColors(payload, length, colors, LED_COUNT);
+            if (count == 0)
+                return;
 
-            if (!flag)
+            ledMode = 0;
+            flag = 1;
+            for (size_t x = 0; x < LED_COUNT; ++x)
             {
-                Serial.print("flag : ");
-                Serial.println(flag);
-                ledMode = flag;
-                ledEffect(ledMode);
-                flag = 1;
+                const ZoneColor color = colorAtLed(colors, count, x, LED_COUNT);
+                leds[x].setRGB(color.r, color.g, color.b);
             }
-            else
-            {
-                // convert to a 24-bit color
-                uint32_t rgb = (uint32_t)strtol((const char *)&payload[1], NULL, 16);
-
-                // split into 8 bits per channel
-                uint8_t r = (0 + (rgb >> 16) & 0xFF);
-                uint8_t g = (0 + (rgb >> 8) & 0xFF);
-                uint8_t b = (0 + (rgb >> 0) & 0xFF);
-
-                Serial.print("ColorPicker: ");
-                Serial.print(r);
-                Serial.print(g);
-                Serial.println(b);
-
-                for (int x = 0; x < LED_COUNT; x++)
-                {
-                    leds[x].setRGB(r, g, b);
-                }
-                LEDS.show();
-            }
+            LEDS.show();
         }
     }
 }
@@ -143,7 +127,7 @@ bool handleFileRead(String path)
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(921600);
     Serial.setTimeout(0);
     LEDS.setBrightness(bright);
 
