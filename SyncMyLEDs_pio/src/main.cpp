@@ -132,8 +132,8 @@ void setup()
     LEDS.setBrightness(bright);
 
     LEDS.addLeds<WS2812B, LED_DT, GRB>(leds, LED_COUNT); // configure the strip (WS2811, WS2812, WS2812B)
-    // settings for your tape (tapes on WS2811, WS2812, WS2812B)
-    updateColor(0, 0, 255);
+    FastLED.setDither(0);                                // settings for your tape (tapes on WS2811, WS2812, WS2812B)
+    updateColor(0, 0, 32);
     LEDS.show();
 
     WiFi.config(Ip, Gateway, Subnet);
